@@ -6,36 +6,44 @@ enum enDigitPosition {
 }
 
 export const validate = (cpf: any) => {
-  cpf = padLeftWithZeros(cpf);
-  if (cpf === cpf[0].repeat(CPF_LENGTH)) {
+  const cleanedCpf = cleanData(cpf);
+
+  if (!hasMinimumLength(cleanedCpf)) {
     return false;
   }
-  const checksum = generateChecksum(cpf);
 
-  return cpf.endsWith(checksum);
+  const paddedCpf = padLeftWithZeros(cleanedCpf);
+
+  if (areAllEqualDigits(paddedCpf)) {
+    return false;
+  }
+
+  const checksum = generateChecksum(paddedCpf);
+
+  return paddedCpf.endsWith(checksum);
 };
 
-const padLeftWithZeros = (cpf: any) => {
-  cpf = `00000000000${cpf}`.replace(/\D/gi, '');
-  return cpf.substr(cpf.length - CPF_LENGTH, CPF_LENGTH);
-};
+const areAllEqualDigits = (cpf: string) => cpf === cpf[0].repeat(CPF_LENGTH);
+
+const cleanData = (cpf: any) => `${cpf}`.replace(/[.-]/gi, '');
+
+const hasMinimumLength = (cpf: string) => cpf.length <= CPF_LENGTH;
+
+const padLeftWithZeros = (cpf: string) => '0'.repeat(CPF_LENGTH - cpf.length) + cpf;
 
 const generateChecksum = (cpf: string) => {
   const firstDigit = calculateFirstDigit(cpf);
-  const firstCheckSum = normalizeDigitValue(firstDigit);
-  const secondDigit = calculateSecondDigit(cpf, firstCheckSum);
-  const secondCheckSum = normalizeDigitValue(secondDigit);
+  const firstChecksum = normalizeDigitValue(firstDigit);
+  const secondDigit = calculateSecondDigit(cpf, firstChecksum);
+  const secondChecksum = normalizeDigitValue(secondDigit);
 
-  return `${firstCheckSum}${secondCheckSum}`;
+  return `${firstChecksum}${secondChecksum}`;
 };
 
-const calculateFirstDigit = (cpf: string) => {
-  return calculateDigit(cpf, enDigitPosition.FIRST);
-};
+const calculateFirstDigit = (cpf: string) => calculateDigit(cpf, enDigitPosition.FIRST);
 
-const calculateSecondDigit = (cpf: string, firstDigit: number) => {
-  return calculateDigit(cpf, enDigitPosition.SECOND) + 2 * firstDigit;
-};
+const calculateSecondDigit = (cpf: string, firstDigit: number) =>
+  calculateDigit(cpf, enDigitPosition.SECOND) + 2 * firstDigit;
 
 const calculateDigit = (cpf: string, digitPosition: enDigitPosition) => {
   return cpf
